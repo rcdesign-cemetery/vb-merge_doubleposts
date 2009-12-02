@@ -221,7 +221,7 @@ if (THIS_SCRIPT == 'group')
     "\n" . fetch_template('showthread_quickreply_mrgdp');
 }]]></phpcode>
 		</plugin>
-		<plugin active="1" executionorder="65535">
+		<plugin active="1" executionorder="1">
 			<title>Advanced merge posts</title>
 			<hookname>postdata_presave</hookname>
 			<phpcode><![CDATA[require_once( DIR . '/includes/functions_mergedoubleposts.php' );
@@ -425,29 +425,29 @@ if( $this->registry->options['mrgdp_use_advanced_merge']
 			<phrase name="you_may_only_attach_x_files_per_this_post" date="1235570265" username="Dimit" version=""><![CDATA[You may only attach up to {2} files per this post of {1} maximum allowed per post ({3} more files are in the previous post which will be merged with this new one).]]></phrase>
 		</phrasetype>
 		<phrasetype name="vBulletin Settings" fieldname="vbsettings">
-			<phrase name="setting_mrgdp_bumpthread_desc" date="1235320472" username="Wildev" version="1.7"><![CDATA[If no, then thread will not go up after merge. It's not recommended to enable.]]></phrase>
-			<phrase name="setting_mrgdp_bumpthread_title" date="1235320472" username="Wildev" version="1.7"><![CDATA[Enable thread bumping]]></phrase>
-			<phrase name="setting_mrgdp_delimeter_enable_desc" date="1235320651" username="Wildev" version="1.7" />
-			<phrase name="setting_mrgdp_delimeter_enable_title" date="1235320651" username="Wildev" version="1.7"><![CDATA[Use delimeter for forums posts]]></phrase>
-			<phrase name="setting_mrgdp_editedby_desc" date="1235320444" username="Wildev" version="1.7"><![CDATA[This text will be used as edit reason in 'edited by' comment.<br />
+			<phrase name="setting_mrgdp_bumpthread_desc" date="1259764962" username="Dimit" version="2.5"><![CDATA[If no, then thread will not go up after merge. It's not recommended to enable.]]></phrase>
+			<phrase name="setting_mrgdp_bumpthread_title" date="1259764962" username="Dimit" version="2.5"><![CDATA[Enable thread bumping]]></phrase>
+			<phrase name="setting_mrgdp_delimeter_enable_desc" date="1259764962" username="Dimit" version="2.5" />
+			<phrase name="setting_mrgdp_delimeter_enable_title" date="1259764962" username="Dimit" version="2.5"><![CDATA[Use delimeter for forums posts]]></phrase>
+			<phrase name="setting_mrgdp_editedby_desc" date="1259764962" username="Dimit" version="2.5"><![CDATA[This text will be used as edit reason in 'edited by' comment.<br />
 (recommended to leave blank)]]></phrase>
-			<phrase name="setting_mrgdp_editedby_title" date="1235320444" username="Wildev" version="1.7"><![CDATA[Edit reason]]></phrase>
-			<phrase name="setting_mrgdp_ignore_forums_desc" date="1235320533" username="Wildev" version="1.7"><![CDATA[Disable merge functionality for these forums.<br />
+			<phrase name="setting_mrgdp_editedby_title" date="1259764962" username="Dimit" version="2.5"><![CDATA[Edit reason]]></phrase>
+			<phrase name="setting_mrgdp_ignore_forums_desc" date="1259764962" username="Dimit" version="2.5"><![CDATA[Disable merge functionality for these forums.<br />
 (comma separated forum ids)]]></phrase>
-			<phrase name="setting_mrgdp_ignore_forums_title" date="1235320533" username="Wildev" version="1.7"><![CDATA[Ignored forums]]></phrase>
-			<phrase name="setting_mrgdp_ignore_groups_desc" date="1235320504" username="Wildev" version="1.7"><![CDATA[You can disable merging functionality for spesific gropus.]]></phrase>
-			<phrase name="setting_mrgdp_ignore_groups_title" date="1235320504" username="Wildev" version="1.7"><![CDATA[Ignored groups]]></phrase>
-			<phrase name="setting_mrgdp_social_delimeter_enable_desc" date="1235320627" username="Wildev" version="1.7" />
-			<phrase name="setting_mrgdp_social_delimeter_enable_title" date="1235320627" username="Wildev" version="1.7"><![CDATA[Use delimeter for social groups posts]]></phrase>
-			<phrase name="setting_mrgdp_social_enable_desc" date="1235320681" username="Wildev" version="1.7" />
-			<phrase name="setting_mrgdp_social_enable_title" date="1235320681" username="Wildev" version="1.7"><![CDATA[Enable posts merge in social groups too]]></phrase>
-			<phrase name="setting_mrgdp_spacer_desc" date="1235753703" username="Dimit" version="1.8"><![CDATA[Enter any message, that should be inserted between merged texts. Use {1} to insert relative time since last change. You can use bbcode here.]]></phrase>
-			<phrase name="setting_mrgdp_spacer_title" date="1235753703" username="Dimit" version="1.8"><![CDATA[Delimeter text]]></phrase>
-			<phrase name="setting_mrgdp_timespan_desc" date="1259579147" username="Dimit" version="2.4"><![CDATA[If user make sequent postings faster than this time, then results will be merged in a single post.]]></phrase>
-			<phrase name="setting_mrgdp_timespan_title" date="1259579147" username="Dimit" version="2.4"><![CDATA[Merge time (minutes)]]></phrase>
-			<phrase name="setting_mrgdp_use_advanced_merge_desc" date="1259663328" username="Dimit" version="2.4" />
-			<phrase name="setting_mrgdp_use_advanced_merge_title" date="1259663328" username="Dimit" version="2.4"><![CDATA[Use advanced merge for posts]]></phrase>
-			<phrase name="settinggroup_mrgdp_prevdoublepost" date="1234561346" username="Wildev" version="1.4"><![CDATA[Doublepost Prevention Plus]]></phrase>
+			<phrase name="setting_mrgdp_ignore_forums_title" date="1259764962" username="Dimit" version="2.5"><![CDATA[Ignored forums]]></phrase>
+			<phrase name="setting_mrgdp_ignore_groups_desc" date="1259764962" username="Dimit" version="2.5"><![CDATA[You can disable merging functionality for spesific gropus.]]></phrase>
+			<phrase name="setting_mrgdp_ignore_groups_title" date="1259764962" username="Dimit" version="2.5"><![CDATA[Ignored groups]]></phrase>
+			<phrase name="setting_mrgdp_social_delimeter_enable_desc" date="1259764962" username="Dimit" version="2.5" />
+			<phrase name="setting_mrgdp_social_delimeter_enable_title" date="1259764962" username="Dimit" version="2.5"><![CDATA[Use delimeter for social groups posts]]></phrase>
+			<phrase name="setting_mrgdp_social_enable_desc" date="1259764962" username="Dimit" version="2.5" />
+			<phrase name="setting_mrgdp_social_enable_title" date="1259764962" username="Dimit" version="2.5"><![CDATA[Enable posts merge in social groups too]]></phrase>
+			<phrase name="setting_mrgdp_spacer_desc" date="1259764962" username="Dimit" version="2.5"><![CDATA[Enter any message, that should be inserted between merged texts. Use {1} to insert relative time since last change. You can use bbcode here.]]></phrase>
+			<phrase name="setting_mrgdp_spacer_title" date="1259764962" username="Dimit" version="2.5"><![CDATA[Delimeter text]]></phrase>
+			<phrase name="setting_mrgdp_timespan_desc" date="1259764962" username="Dimit" version="2.5"><![CDATA[If user make sequent postings faster than this time, then results will be merged in a single post.]]></phrase>
+			<phrase name="setting_mrgdp_timespan_title" date="1259764962" username="Dimit" version="2.5"><![CDATA[Merge time (minutes)]]></phrase>
+			<phrase name="setting_mrgdp_use_advanced_merge_desc" date="1259765692" username="Vitaly" version="2.5"><![CDATA[Don't touch! New method merge posts in single pass. Disabling this setting causes rollback to 2-pass merge (create new post, then merge to previous, then delete new post). This setting will be removed, if no conflicts found.]]></phrase>
+			<phrase name="setting_mrgdp_use_advanced_merge_title" date="1259765692" username="Vitaly" version="2.5"><![CDATA[Use advanced merge method]]></phrase>
+			<phrase name="settinggroup_mrgdp_prevdoublepost" date="1259764962" username="Dimit" version="2.5"><![CDATA[Merge Double Posts]]></phrase>
 		</phrasetype>
 	</phrases>
 	<options>
