@@ -1,0 +1,510 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<product productid="mergedoubleposts" active="1">
+	<title>Merge Double Posts</title>
+	<description>This Modification prevents doubleposts by merging post together, if the last poster of a thread tries to post again.</description>
+	<version>2.5</version>
+	<url><![CDATA[http://www.vbulletin.org/forum/misc.php?do=producthelp&pid=mergedoubleposts]]></url>
+	<versioncheckurl><![CDATA[http://www.vbulletin.org/forum/misc.php?do=productcheck&pid=mergedoubleposts]]></versioncheckurl>
+	<apm_releasedate>1259618400</apm_releasedate>
+	<apm_author>Dmitry Titov, Vitaly Puzrin</apm_author>
+	<apm_relatedurl />
+	<apm_extrainfo />
+	<apm_extraedit />
+	<dependencies>
+	</dependencies>
+	<codes>
+		<code version="1.7">
+			<installcode><![CDATA[if (!$db->query_first("SHOW COLUMNS FROM " . TABLE_PREFIX . "groupmessage LIKE 'dpmod_editdateline'"))
+  $db->query_write("ALTER TABLE " . TABLE_PREFIX . "groupmessage ADD COLUMN `dpmod_editdateline` INT UNSIGNED NOT NULL");]]></installcode>
+			<uninstallcode><![CDATA[if ($db->query_first("SHOW COLUMNS FROM " . TABLE_PREFIX . "groupmessage LIKE 'dpmod_editdateline'"))
+  $db->query_write("ALTER TABLE " . TABLE_PREFIX . "groupmessage DROP `dpmod_editdateline`");
+]]></uninstallcode>
+		</code>
+		<code version="2.5">
+			<installcode><![CDATA[if (!$db->query_first("SHOW COLUMNS FROM " . TABLE_PREFIX . "groupmessage LIKE 'mrgdp_editdateline'"))
+  $db->query_write("ALTER TABLE " . TABLE_PREFIX . "groupmessage CHANGE `dpmod_editdateline` `mrgdp_editdateline` INT( 10 ) UNSIGNED NOT NULL");]]></installcode>
+			<uninstallcode><![CDATA[if ($db->query_first("SHOW COLUMNS FROM " . TABLE_PREFIX . "groupmessage LIKE 'mrgdp_editdateline'"))
+  $db->query_write("ALTER TABLE " . TABLE_PREFIX . "groupmessage DROP `mrgdp_editdateline`");]]></uninstallcode>
+		</code>
+	</codes>
+	<templates>
+		<template name="showthread_quickreply_mrgdp" templatetype="template" date="1235841300" username="Dimit" version=""><![CDATA[<script type="text/javascript">
+<!--
+  var qr_do_ajax_post_original = qr_do_ajax_post;
+
+  qr_do_ajax_post =
+    function(G) {
+      if (G.responseXML)
+      {
+        document.body.style.cursor = "auto";
+        fetch_object("qr_posting_msg").style.display = "none";
+
+        if (fetch_tag_count(G.responseXML, "postbit")) {
+          qr_disable_controls();
+          qr_hide_errors();
+
+          var D;
+          var C = G.responseXML.getElementsByTagName("postbit");
+
+          for (D = 0; D < C.length; D++) {
+            var dp_editdiv = fetch_object("edit" + C[D].getAttribute("postid"));
+
+            if (dp_editdiv) {
+              dp_editdiv.parentNode.removeChild(dp_editdiv);
+            }
+          }
+        }
+      }
+
+      return qr_do_ajax_post_original(G);
+    };
+-->
+</script>
+]]></template>
+		<template name="socialgroups_group_mrgdp" templatetype="template" date="1235841384" username="Dimit" version=""><![CDATA[<script type="text/javascript">
+<!--
+  vB_QuickComment.prototype.post_save_original =
+    vB_QuickComment.prototype.post_save;
+
+  vB_QuickComment.prototype.post_save =
+    function(ajax) {
+      if (ajax.responseXML && fetch_tag_count(ajax.responseXML, "message")) {
+        var D;
+        var C = ajax.responseXML.getElementsByTagName("message");
+
+        for (D = 0; D < C.length; D++) {
+          var dp_2rem_li = fetch_object("gmessage" + C[D].getAttribute("gmid"));
+
+          if (dp_2rem_li) {
+            dp_2rem_li.parentNode.removeChild(dp_2rem_li);
+          }
+        }
+      }
+
+      return this.post_save_original(ajax);
+    };
+-->
+</script>]]></template>
+	</templates>
+	<plugins>
+		<plugin active="1" executionorder="5">
+			<title>Cache Templates</title>
+			<hookname>cache_templates</hookname>
+			<phpcode><![CDATA[if (THIS_SCRIPT == 'showthread')
+{
+  $globaltemplates[] = 'showthread_quickreply_mrgdp';
+}
+
+if (THIS_SCRIPT == 'group')
+{
+  $globaltemplates[] = 'socialgroups_group_mrgdp';
+}]]></phpcode>
+		</plugin>
+		<plugin active="1" executionorder="5">
+			<title>Groups: Set last edit time</title>
+			<hookname>groupmessagedata_presave</hookname>
+			<phpcode><![CDATA[$this->set('mrgdp_editdateline', TIMENOW);]]></phpcode>
+		</plugin>
+		<plugin active="1" executionorder="5">
+			<title>Groups: Add the valid field to DM</title>
+			<hookname>groupmessagedata_start</hookname>
+			<phpcode><![CDATA[$this->validfields['mrgdp_editdateline'] = array(TYPE_UNIXTIME, REQ_NO);]]></phpcode>
+		</plugin>
+		<plugin active="1" executionorder="5">
+			<title>Groups: Modify quick reply template</title>
+			<hookname>group_complete</hookname>
+			<phpcode><![CDATA[if ($show['quickcomment']
+    AND (    $templatename == 'socialgroups_group'
+          OR $templatename == 'socialgroups_discussionview'))
+{
+  eval('$footer .= "' . fetch_template('socialgroups_group_mrgdp') . '";');
+}]]></phpcode>
+		</plugin>
+		<plugin active="1" executionorder="5">
+			<title>Groups: Merge Posts</title>
+			<hookname>group_start_precheck</hookname>
+			<phpcode><![CDATA[if (    $vbulletin->options['mrgdp_social_enable']
+    AND $_POST['do'] == 'message'
+    AND !$_POST['preview']
+    AND !$vbulletin->GPC['gmid']
+    AND  $vbulletin->GPC['discussionid'])
+{
+  require_once(DIR . '/includes/functions_mergedoubleposts.php');
+  mrgdp_group_start_precheck( $message );
+}]]></phpcode>
+		</plugin>
+		<plugin active="1" executionorder="5">
+			<title>Check attachments count</title>
+			<hookname>newattachment_start</hookname>
+			<phpcode><![CDATA[if ($threadid AND !$postid) // newreply.php called
+{
+  require_once(DIR . '/includes/functions_mergedoubleposts.php');
+  mrgdp_newattachment_start( $foruminfo );
+}]]></phpcode>
+		</plugin>
+		<plugin active="1" executionorder="5">
+			<title>Merge posts</title>
+			<hookname>newpost_complete</hookname>
+			<phpcode><![CDATA[if( ! $vbulletin->options['mrgdp_use_advanced_merge'] )
+{
+  if( ! $prevpostfound AND $vbulletin->GPC['mrgdp_probdoublepost'] )
+  {
+    require_once( DIR . '/includes/functions_mergedoubleposts.php' );
+    mrgdp_newpost_complete( $dpostsaved, $post, $foruminfo, $mrgdp_threadinfo, $threadinfo );
+  }
+}]]></phpcode>
+		</plugin>
+		<plugin active="1" executionorder="1">
+			<title>Advanced merge posts</title>
+			<hookname>newpost_complete</hookname>
+			<phpcode><![CDATA[if( $vbulletin->options['mrgdp_use_advanced_merge']
+    AND $vbulletin->GPC['mrgdp_posts_are_merged'] )
+{
+  // set correct postid value
+  $post['postid'] = $dataman->fetch_field('postid'); 
+
+  // restore 'enableemail' flag value
+  $vbulletin->options['enableemail'] = $vbulletin->GPC['mrgdp_enableemail'];
+
+  // ### DO EMAIL NOTIFICATION ###
+  if(     $post['visible']
+      AND $type != 'thread'
+      AND ! in_coventry( $vbulletin->userinfo['userid'], true ) )
+  {
+    exec_send_notification(
+      $threadinfo['threadid'],
+      $vbulletin->userinfo['userid'],
+      $post['postid']
+    );
+  }
+
+  // insert dupehash
+  $vbulletin->db->query_write("
+    INSERT INTO
+      `" . TABLE_PREFIX . "posthash`
+    SET
+      `userid`   =  " . $vbulletin->userinfo['userid'] . ",
+      `threadid` =  " . $threadinfo['threadid'] . ",
+      `dupehash` = '" . $vbulletin->db->escape_string( $vbulletin->GPC['mrgdp_dupehash'] ) . "',
+      `dateline` =  " . TIMENOW . "
+  ");
+}]]></phpcode>
+		</plugin>
+		<plugin active="1" executionorder="10">
+			<title>Check merge conditions</title>
+			<hookname>newpost_process</hookname>
+			<phpcode><![CDATA[if( ! $vbulletin->options['mrgdp_use_advanced_merge'] )
+{
+  require_once( DIR . '/includes/functions_mergedoubleposts.php' );
+  mrgdp_newpost_process( $mrgdp_threadinfo, $dpostsaved, $threadinfo );
+}]]></phpcode>
+		</plugin>
+		<plugin active="1" executionorder="5">
+			<title>Return merged post</title>
+			<hookname>newreply_post_ajax</hookname>
+			<phpcode><![CDATA[if( ! $vbulletin->options['mrgdp_use_advanced_merge'] )
+{
+  if( $vbulletin->GPC['ajax']
+      AND $vbulletin->GPC['mrgdp_probdoublepost'] )
+  {
+    $vbulletin->GPC['ajax_lastpost'] = 0;
+  }
+}]]></phpcode>
+		</plugin>
+		<plugin active="1" executionorder="5">
+			<title>Modify quick reply template</title>
+			<hookname>parse_templates</hookname>
+			<phpcode><![CDATA[if (THIS_SCRIPT == 'showthread')
+{
+  $vbulletin->templatecache['showthread_quickreply'] .=
+    "\n" . fetch_template('showthread_quickreply_mrgdp');
+}]]></phpcode>
+		</plugin>
+		<plugin active="1" executionorder="65535">
+			<title>Advanced merge posts</title>
+			<hookname>postdata_presave</hookname>
+			<phpcode><![CDATA[require_once( DIR . '/includes/functions_mergedoubleposts.php' );
+
+if( $this->registry->options['mrgdp_use_advanced_merge']
+    AND ! $this->post['preview'] /* do not do anything on message preview */
+    AND $this->post['threadid']
+    AND $this->info['thread']['lastposter'] == $this->fetch_field( 'username' )
+    AND $this->info['thread']['lastpost']
+        > ( TIMENOW - $this->registry->options['mrgdp_timespan'] * 60 )
+    AND CheckMrgDPEnabled()
+  )
+{
+  // ### DUPE CHECK ###
+  $dupehash = md5(
+      $this->info['forum']['forumid']
+    . $this->post['title']
+    . $this->post['pagetext']
+    . $this->registry->userinfo['userid']
+    . 'reply'
+  );
+
+  $prevpostfound = false;
+
+  if( $prevpost = $this->dbobject->query_first( "
+    SELECT
+      posthash.threadid
+    FROM
+      " . TABLE_PREFIX . "posthash AS posthash
+    WHERE
+          posthash.userid   =  " . $this->registry->userinfo['userid'] . "
+      AND posthash.dupehash = '" . $this->dbobject->escape_string( $dupehash ) . "'
+      AND posthash.dateline >  " . ( TIMENOW - 300 ) . "
+  " ) )
+  {
+    if( $prevpost['threadid'] == $this->info['thread']['threadid'] )
+    {
+      $prevpostfound = true;
+      //$this->error( 'duplicate_post' );
+    }
+  }
+
+  if( ! $prevpostfound )
+  {
+    // find the very last post in the thread
+    if( $mrgdp_prevpost = $this->dbobject->query_first( "
+     SELECT
+        P.*,
+        E.`dateline` AS 'lasteditdateline',
+        E.`reason`   AS 'edit_reason'
+      FROM
+                  `" . TABLE_PREFIX . "post`        AS P
+        LEFT JOIN `" . TABLE_PREFIX . "deletionlog` AS L
+          ON( L.`primaryid` = P.`postid` AND `type` = 'post' )
+        LEFT JOIN `" . TABLE_PREFIX . "editlog`     AS E
+          ON( E.`postid`    = P.`postid` )
+      WHERE
+            P.`threadid`   = " . intval( $this->post['threadid'] ) . "
+        AND P.`dateline`   > " . intval( TIMENOW - $this->registry->options['mrgdp_timespan'] * 60 ) . "
+        AND P.`visible`    = 1
+        AND L.`primaryid` IS NULL
+      ORDER BY
+        P.`dateline` DESC
+      LIMIT
+        1
+    " ) )
+    {
+      // is the previous post posted by the same user as the new one
+      if( $this->fetch_field('userid') == $mrgdp_prevpost['userid'] )
+      {
+        // save new post's pagetext
+        $mrgdp_pagetext = $this->fetch_field( 'pagetext' );
+
+        // update dataman values with previous post data
+        $this->set_existing( $mrgdp_prevpost );
+
+        // create splitter with optional formatted 'added after' time
+        $mrgdp_splitter = '';
+
+        if( ! $mrgdp_prevpost['lasteditdateline'] )
+          $mrgdp_prevpost['lasteditdateline'] = $mrgdp_prevpost['dateline'];
+
+        if( $this->registry->options['mrgdp_delimeter_enable']
+            AND $mrgdp_prevpost['lasteditdateline']
+                < ( TIMENOW - $this->registry->options['noeditedbytime'] * 60 ) )
+        {
+          $mrgdp_diff_time = TIMENOW - $mrgdp_prevpost['lasteditdateline'];
+
+          // do not add splitter if time difference is less than a minute
+          if( $mrgdp_diff_time >= 60 )
+            $mrgdp_splitter = "\n" . construct_phrase(
+                MrgDPFetchSplitter(),
+                MrgDPFormatTime( $mrgdp_diff_time )
+              );
+        }
+
+        // merge posts texts
+        $mrgdp_pagetext =
+          $mrgdp_prevpost['pagetext']
+          . "\n" . $mrgdp_splitter
+          . "\n" . $mrgdp_pagetext;
+
+        //$this->setr( 'pagetext', $mrgdp_pagetext );
+        $this->post['pagetext'] = $mrgdp_pagetext;
+
+        // do bump thread if allowed in settings
+        if( $this->registry->options['mrgdp_bumpthread'] )
+          $this->set( 'dateline', TIMENOW );
+
+        // add edit reason if not empty and allowed
+        $mrgdp_edit_reason = trim( $this->registry->options['mrgdp_editedby'] );
+
+        // add edited by
+        if( $mrgdp_prevpost['lasteditdateline']
+              < ( TIMENOW - $this->registry->options['noeditedbytime'] * 60 ) )
+        {
+          // save the postedithistory
+          if( $this->registry->options['postedithistory'] )
+          {
+            // insert original post on first edit
+            if( ! $this->dbobject->query_first( "
+                    SELECT
+                      `postedithistoryid`
+                    FROM
+                      `" . TABLE_PREFIX . "postedithistory`
+                    WHERE
+                          `original` = 1
+                      AND `postid`   = " . intval( $mrgdp_prevpost['postid'] ) . "
+            " ) )
+            {
+              $this->dbobject->query_write( "
+                INSERT INTO
+                  `" . TABLE_PREFIX . "postedithistory`
+                SET
+                  `reason`   = '',
+                  `original` =  1,
+                  `dateline` =  " . intval( $mrgdp_prevpost['dateline'] ) . " ,
+                  `postid`   =  " . intval( $mrgdp_prevpost['postid']   ) . " ,
+                  `userid`   =  " . intval( $mrgdp_prevpost['userid']   ) . " ,
+                  `iconid`   =  " . intval( $mrgdp_prevpost['iconid']   ) . " ,
+                  `username` = '" . addslashes( $mrgdp_prevpost['username'] ) . "',
+                  `title`    = '" . addslashes( $mrgdp_prevpost['title']    ) . "',
+                  `pagetext` = '" . addslashes( $mrgdp_prevpost['pagetext'] ) . "'
+              " );
+            }
+
+            // insert the new version
+            $this->dbobject->query_write( "
+              INSERT INTO
+                `" . TABLE_PREFIX . "postedithistory`
+              SET
+                `dateline` =  " . TIMENOW . " ,
+                `postid`   =  " . intval( $mrgdp_prevpost['postid']   ) . " ,
+                `userid`   =  " . intval( $mrgdp_prevpost['userid']   ) . " ,
+                `iconid`   =  " . intval( $mrgdp_prevpost['iconid']   ) . " ,
+                `reason`   = '" . addslashes( $mrgdp_edit_reason          ) . "',
+                `username` = '" . addslashes( $mrgdp_prevpost['username'] ) . "',
+                `title`    = '" . addslashes( $mrgdp_prevpost['title']    ) . "',
+                `pagetext` = '" . addslashes( $mrgdp_pagetext             ) . "'
+            " );
+          }
+
+          // insert query
+          $this->dbobject->query_write("
+            REPLACE INTO
+              `" . TABLE_PREFIX . "editlog`
+            SET
+              `dateline`   =  " . TIMENOW . ",
+              `postid`     =  " . intval( $mrgdp_prevpost['postid'] ) . " ,
+              `userid`     =  " . intval( $mrgdp_prevpost['userid'] ) . " ,
+              `username`   = '" . addslashes( $mrgdp_prevpost['username'] ) . "',
+              `reason`     = '" . addslashes( $mrgdp_edit_reason          ) . "',
+              `hashistory` =  " . ( $this->registry->options['postedithistory'] ? 1 : 0 ) . "
+          ");
+        }
+
+        // set flag showing that posts are merged to correctly send notifications
+        $this->registry->GPC['mrgdp_posts_are_merged'] = true;
+
+        // save dupehash
+        $this->registry->GPC['mrgdp_dupehash'] = $dupehash;
+
+        // save original 'enableemail' flag value
+        $this->registry->GPC['mrgdp_enableemail']
+          = $this->registry->options['enableemail'];
+
+        // set 'enableemail' flag to 'false' to prevent sending notifications
+        // cause it results in an error, we will do it manualy a bit later
+        // at 'newpost_complete' hook
+        $this->registry->options['enableemail'] = false;
+      }
+    }  
+  }
+}]]></phpcode>
+		</plugin>
+	</plugins>
+	<phrases>
+		<phrasetype name="GLOBAL" fieldname="global">
+			<phrase name="have_uploaded_maximum_x_files_per_this_post" date="1234894548" username="Wildev" version=""><![CDATA[You have uploaded the maximum of {1} files per this post ({3} more files are in the previous post which will be merged with this new one)]]></phrase>
+			<phrase name="minutes" date="1234979197" username="Wildev" version=""><![CDATA[minutes]]></phrase>
+			<phrase name="you_may_only_attach_x_files_per_this_post" date="1235570265" username="Dimit" version=""><![CDATA[You may only attach up to {2} files per this post of {1} maximum allowed per post ({3} more files are in the previous post which will be merged with this new one).]]></phrase>
+		</phrasetype>
+		<phrasetype name="vBulletin Settings" fieldname="vbsettings">
+			<phrase name="setting_mrgdp_bumpthread_desc" date="1235320472" username="Wildev" version="1.7"><![CDATA[If no, then thread will not go up after merge. It's not recommended to enable.]]></phrase>
+			<phrase name="setting_mrgdp_bumpthread_title" date="1235320472" username="Wildev" version="1.7"><![CDATA[Enable thread bumping]]></phrase>
+			<phrase name="setting_mrgdp_delimeter_enable_desc" date="1235320651" username="Wildev" version="1.7" />
+			<phrase name="setting_mrgdp_delimeter_enable_title" date="1235320651" username="Wildev" version="1.7"><![CDATA[Use delimeter for forums posts]]></phrase>
+			<phrase name="setting_mrgdp_editedby_desc" date="1235320444" username="Wildev" version="1.7"><![CDATA[This text will be used as edit reason in 'edited by' comment.<br />
+(recommended to leave blank)]]></phrase>
+			<phrase name="setting_mrgdp_editedby_title" date="1235320444" username="Wildev" version="1.7"><![CDATA[Edit reason]]></phrase>
+			<phrase name="setting_mrgdp_ignore_forums_desc" date="1235320533" username="Wildev" version="1.7"><![CDATA[Disable merge functionality for these forums.<br />
+(comma separated forum ids)]]></phrase>
+			<phrase name="setting_mrgdp_ignore_forums_title" date="1235320533" username="Wildev" version="1.7"><![CDATA[Ignored forums]]></phrase>
+			<phrase name="setting_mrgdp_ignore_groups_desc" date="1235320504" username="Wildev" version="1.7"><![CDATA[You can disable merging functionality for spesific gropus.]]></phrase>
+			<phrase name="setting_mrgdp_ignore_groups_title" date="1235320504" username="Wildev" version="1.7"><![CDATA[Ignored groups]]></phrase>
+			<phrase name="setting_mrgdp_social_delimeter_enable_desc" date="1235320627" username="Wildev" version="1.7" />
+			<phrase name="setting_mrgdp_social_delimeter_enable_title" date="1235320627" username="Wildev" version="1.7"><![CDATA[Use delimeter for social groups posts]]></phrase>
+			<phrase name="setting_mrgdp_social_enable_desc" date="1235320681" username="Wildev" version="1.7" />
+			<phrase name="setting_mrgdp_social_enable_title" date="1235320681" username="Wildev" version="1.7"><![CDATA[Enable posts merge in social groups too]]></phrase>
+			<phrase name="setting_mrgdp_spacer_desc" date="1235753703" username="Dimit" version="1.8"><![CDATA[Enter any message, that should be inserted between merged texts. Use {1} to insert relative time since last change. You can use bbcode here.]]></phrase>
+			<phrase name="setting_mrgdp_spacer_title" date="1235753703" username="Dimit" version="1.8"><![CDATA[Delimeter text]]></phrase>
+			<phrase name="setting_mrgdp_timespan_desc" date="1259579147" username="Dimit" version="2.4"><![CDATA[If user make sequent postings faster than this time, then results will be merged in a single post.]]></phrase>
+			<phrase name="setting_mrgdp_timespan_title" date="1259579147" username="Dimit" version="2.4"><![CDATA[Merge time (minutes)]]></phrase>
+			<phrase name="setting_mrgdp_use_advanced_merge_desc" date="1259663328" username="Dimit" version="2.4" />
+			<phrase name="setting_mrgdp_use_advanced_merge_title" date="1259663328" username="Dimit" version="2.4"><![CDATA[Use advanced merge for posts]]></phrase>
+			<phrase name="settinggroup_mrgdp_prevdoublepost" date="1234561346" username="Wildev" version="1.4"><![CDATA[Doublepost Prevention Plus]]></phrase>
+		</phrasetype>
+	</phrases>
+	<options>
+		<settinggroup name="mrgdp_prevdoublepost" displayorder="65535">
+			<setting varname="mrgdp_use_advanced_merge" displayorder="1">
+				<datatype>boolean</datatype>
+				<optioncode>yesno</optioncode>
+				<defaultvalue>1</defaultvalue>
+			</setting>
+			<setting varname="mrgdp_timespan" displayorder="10">
+				<datatype>number</datatype>
+				<defaultvalue>60</defaultvalue>
+			</setting>
+			<setting varname="mrgdp_social_enable" displayorder="20">
+				<datatype>boolean</datatype>
+				<optioncode>yesno</optioncode>
+				<defaultvalue>1</defaultvalue>
+			</setting>
+			<setting varname="mrgdp_spacer" displayorder="30">
+				<datatype>free</datatype>
+				<optioncode>textarea</optioncode>
+				<defaultvalue><![CDATA[[i]Added after {1}[/i]:]]></defaultvalue>
+			</setting>
+			<setting varname="mrgdp_delimeter_enable" displayorder="40">
+				<datatype>boolean</datatype>
+				<optioncode>yesno</optioncode>
+				<defaultvalue>0</defaultvalue>
+			</setting>
+			<setting varname="mrgdp_social_delimeter_enable" displayorder="50">
+				<datatype>boolean</datatype>
+				<optioncode>yesno</optioncode>
+				<defaultvalue>0</defaultvalue>
+			</setting>
+			<setting varname="mrgdp_editedby" displayorder="60">
+				<datatype>free</datatype>
+			</setting>
+			<setting varname="mrgdp_bumpthread" displayorder="70">
+				<datatype>boolean</datatype>
+				<optioncode>yesno</optioncode>
+				<defaultvalue>0</defaultvalue>
+			</setting>
+			<setting varname="mrgdp_ignore_groups" displayorder="80">
+				<datatype>free</datatype>
+				<optioncode>usergroup:5</optioncode>
+				<defaultvalue>a:1:{i:0;i:0;}</defaultvalue>
+			</setting>
+			<setting varname="mrgdp_ignore_forums" displayorder="90">
+				<datatype>free</datatype>
+			</setting>
+		</settinggroup>
+	</options>
+	<helptopics>
+	</helptopics>
+	<cronentries>
+	</cronentries>
+	<faqentries>
+	</faqentries>
+	<templateedits>
+	</templateedits>
+</product>

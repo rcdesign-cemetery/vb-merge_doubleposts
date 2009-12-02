@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<product productid="mergedoubleposts_ru" active="1">
+	<title>Merge Double Posts: Russian</title>
+	<description>Adds specific russian language rules</description>
+	<version>1.2</version>
+	<url />
+	<versioncheckurl />
+	<apm_releasedate>1259618400</apm_releasedate>
+	<apm_author>Dmitry Titov, Vitaly Puzrin</apm_author>
+	<apm_relatedurl />
+	<apm_extrainfo />
+	<apm_extraedit />
+	<dependencies>
+		<dependency dependencytype="product" parentproductid="mergedoubleposts" minversion="1.8" maxversion="" />
+	</dependencies>
+	<codes>
+	</codes>
+	<templates>
+	</templates>
+	<plugins>
+		<plugin active="1" executionorder="4">
+			<title>Redeclare time format function</title>
+			<hookname>mrgdp_formattimeunit_localize</hookname>
+			<phpcode><![CDATA[/*
+ * 
+ * Redefine function for specific russian language rules
+ * 
+ */
+
+if (!function_exists('MrgDPFormatTimeUnit'))
+{
+  function MrgDPFormatTimeUnit($unit, $value)
+  {
+    global $vbphrase;
+
+    if (!intval($value))
+      return '';
+
+    $unit = 'mrgdp_ru_' . $unit . '_';
+
+    /*
+     * 
+     *  $vbphrase['mrgdp_ru_<unit>_<index>']
+     * 
+     *  where <unit> is one of the following:
+     *    - day
+     *    - hour
+     *    - minute
+     *  and <index> is one of the following:
+     *    - 1           [1]
+     *    - 2to4        [2..4]
+     *    - 0and5to14   [0,5..14]
+     * 
+     */
+
+    $retstr = $value . ' ';
+
+    // we need only remainder of division by 10 if the $value >= 15
+    if (15 <= $value)
+      $value = $value % 10;
+
+    $retstr .=
+      (0 == $value)                  ? $vbphrase[$unit.'0and5to14'] : (
+      (1 == $value)                  ? $vbphrase[$unit.'1']         : (
+      (2 <= $value AND $value <=  4) ? $vbphrase[$unit.'2to4']      : (
+      (5 <= $value AND $value <= 14) ? $vbphrase[$unit.'0and5to14'] : '' )));
+
+    return trim($retstr);
+  }
+}]]></phpcode>
+		</plugin>
+	</plugins>
+	<phrases>
+		<phrasetype name="GLOBAL" fieldname="global">
+			<phrase name="mrgdp_ru_day_0and5to14" date="1235564624" username="Wildev" version=""><![CDATA[дней]]></phrase>
+			<phrase name="mrgdp_ru_day_1" date="1235564638" username="Wildev" version=""><![CDATA[день]]></phrase>
+			<phrase name="mrgdp_ru_day_2to4" date="1235564652" username="Wildev" version=""><![CDATA[дня]]></phrase>
+			<phrase name="mrgdp_ru_hour_0and5to14" date="1235564665" username="Wildev" version=""><![CDATA[часов]]></phrase>
+			<phrase name="mrgdp_ru_hour_1" date="1235564680" username="Wildev" version=""><![CDATA[час]]></phrase>
+			<phrase name="mrgdp_ru_hour_2to4" date="1235564694" username="Wildev" version=""><![CDATA[часа]]></phrase>
+			<phrase name="mrgdp_ru_minute_0and5to14" date="1235564707" username="Wildev" version=""><![CDATA[минут]]></phrase>
+			<phrase name="mrgdp_ru_minute_1" date="1235564790" username="Wildev" version=""><![CDATA[минуту]]></phrase>
+			<phrase name="mrgdp_ru_minute_2to4" date="1235564729" username="Wildev" version=""><![CDATA[минуты]]></phrase>
+		</phrasetype>
+	</phrases>
+	<options>
+	</options>
+	<helptopics>
+	</helptopics>
+	<cronentries>
+	</cronentries>
+	<faqentries>
+	</faqentries>
+	<templateedits>
+	</templateedits>
+</product>
