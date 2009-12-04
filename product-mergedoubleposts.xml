@@ -3,10 +3,10 @@
 <product productid="mergedoubleposts" active="1">
 	<title>Merge Double Posts</title>
 	<description>This Modification prevents doubleposts by merging post together, if the last poster of a thread tries to post again.</description>
-	<version>2.5</version>
+	<version>2.6</version>
 	<url><![CDATA[http://www.vbulletin.org/forum/misc.php?do=producthelp&pid=mergedoubleposts]]></url>
 	<versioncheckurl><![CDATA[http://www.vbulletin.org/forum/misc.php?do=productcheck&pid=mergedoubleposts]]></versioncheckurl>
-	<apm_releasedate>1259618400</apm_releasedate>
+	<apm_releasedate>1259877600</apm_releasedate>
 	<apm_author>Dmitry Titov, Vitaly Puzrin</apm_author>
 	<apm_relatedurl />
 	<apm_extrainfo />
@@ -292,11 +292,19 @@ if( $this->registry->options['mrgdp_use_advanced_merge']
       // is the previous post posted by the same user as the new one
       if( $this->fetch_field('userid') == $mrgdp_prevpost['userid'] )
       {
-        // save new post's pagetext
-        $mrgdp_pagetext = $this->fetch_field( 'pagetext' );
-
         // update dataman values with previous post data
-        $this->set_existing( $mrgdp_prevpost );
+        // we only need to set postid to update existing post
+        $mrgdp_existing = array(
+          'postid' => $mrgdp_prevpost['postid'],
+        );
+
+        $this->set_existing( $mrgdp_existing );
+
+        // save attachments info from previous post + new post
+        $this->set(
+          'attach',
+          $mrgdp_prevpost['attach'] + $this->info['newattach']
+        );
 
         // create splitter with optional formatted 'added after' time
         $mrgdp_splitter = '';
@@ -322,10 +330,9 @@ if( $this->registry->options['mrgdp_use_advanced_merge']
         $mrgdp_pagetext =
           $mrgdp_prevpost['pagetext']
           . "\n" . $mrgdp_splitter
-          . "\n" . $mrgdp_pagetext;
+          . "\n" . $this->fetch_field( 'pagetext' );
 
-        //$this->setr( 'pagetext', $mrgdp_pagetext );
-        $this->post['pagetext'] = $mrgdp_pagetext;
+        $this->setr( 'pagetext', $mrgdp_pagetext );
 
         // do bump thread if allowed in settings
         if( $this->registry->options['mrgdp_bumpthread'] )
