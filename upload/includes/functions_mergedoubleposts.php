@@ -44,29 +44,60 @@ function CheckMrgDPEnabled()
     $mrgdp_enable = false;
   }
 
-  // check ignore forums
   if ($mrgdp_enable AND is_array($foruminfo))
   {
-    $mrgdp_ignore_forums = trim($vbulletin->options['mrgdp_ignore_forums']);
+    $mrgdp_this_forum = explode(',', $foruminfo['parentlist']);
 
-    if (!empty($mrgdp_ignore_forums))
+    // check enabled forums if it is not empty
+    $mrgdp_enable_forums = trim($vbulletin->options['mrgdp_enable_forums']);
+
+    if (!empty($mrgdp_enable_forums))
     {
-      $mrgdp_this_forum = explode(',', $foruminfo['parentlist']);
-      $mrgdp_forums     = explode(',', $mrgdp_ignore_forums);
+      // default value
+      $mrgdp_enable = false;
+
+      $mrgdp_forums = explode(',', $mrgdp_enable_forums);
 
       foreach ($mrgdp_forums AS &$mrgdp_forumid)
       {
         if (in_array(intval($mrgdp_forumid), $mrgdp_this_forum))
         {
-          $mrgdp_enable = false;
+          $mrgdp_enable = true;
           break;
         }
       }
 
-      unset($mrgdp_forums, $mrgdp_this_forum);
+      unset($mrgdp_forums);
     }
 
-    unset($mrgdp_ignore_forums);
+    unset($mrgdp_enable_forums);
+
+
+    if ($mrgdp_enable)
+    {
+      // check ignore forums
+      $mrgdp_ignore_forums = trim($vbulletin->options['mrgdp_ignore_forums']);
+
+      if (!empty($mrgdp_ignore_forums))
+      {
+        $mrgdp_forums = explode(',', $mrgdp_ignore_forums);
+
+        foreach ($mrgdp_forums AS &$mrgdp_forumid)
+        {
+          if (in_array(intval($mrgdp_forumid), $mrgdp_this_forum))
+          {
+            $mrgdp_enable = false;
+            break;
+          }
+        }
+
+        unset($mrgdp_forums);
+      }
+
+      unset($mrgdp_ignore_forums);
+    }
+
+    unset($mrgdp_this_forum);
   }
 
   return $mrgdp_enable;

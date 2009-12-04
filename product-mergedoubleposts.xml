@@ -332,7 +332,8 @@ if( $this->registry->options['mrgdp_use_advanced_merge']
           . "\n" . $mrgdp_splitter
           . "\n" . $this->fetch_field( 'pagetext' );
 
-        $this->setr( 'pagetext', $mrgdp_pagetext );
+        //$this->setr( 'pagetext', $mrgdp_pagetext );
+        $this->post['pagetext'] = $mrgdp_pagetext;
 
         // do bump thread if allowed in settings
         if( $this->registry->options['mrgdp_bumpthread'] )
@@ -439,6 +440,9 @@ if( $this->registry->options['mrgdp_use_advanced_merge']
 			<phrase name="setting_mrgdp_editedby_desc" date="1259764962" username="Dimit" version="2.5"><![CDATA[This text will be used as edit reason in 'edited by' comment.<br />
 (recommended to leave blank)]]></phrase>
 			<phrase name="setting_mrgdp_editedby_title" date="1259764962" username="Dimit" version="2.5"><![CDATA[Edit reason]]></phrase>
+			<phrase name="setting_mrgdp_enable_forums_desc" date="1259937298" username="Dimit" version="2.6"><![CDATA[Enable merge functionality only for these forums.<br />
+(comma separated forum ids)]]></phrase>
+			<phrase name="setting_mrgdp_enable_forums_title" date="1259937298" username="Dimit" version="2.6"><![CDATA[Enabled forums]]></phrase>
 			<phrase name="setting_mrgdp_ignore_forums_desc" date="1259764962" username="Dimit" version="2.5"><![CDATA[Disable merge functionality for these forums.<br />
 (comma separated forum ids)]]></phrase>
 			<phrase name="setting_mrgdp_ignore_forums_title" date="1259764962" username="Dimit" version="2.5"><![CDATA[Ignored forums]]></phrase>
@@ -500,6 +504,9 @@ if( $this->registry->options['mrgdp_use_advanced_merge']
 				<datatype>free</datatype>
 				<optioncode>usergroup:5</optioncode>
 				<defaultvalue>a:1:{i:0;i:0;}</defaultvalue>
+			</setting>
+			<setting varname="mrgdp_enable_forums" displayorder="85">
+				<datatype>free</datatype>
 			</setting>
 			<setting varname="mrgdp_ignore_forums" displayorder="90">
 				<datatype>free</datatype>
