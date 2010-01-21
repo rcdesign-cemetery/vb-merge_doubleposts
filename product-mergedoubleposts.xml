@@ -143,26 +143,11 @@ if (THIS_SCRIPT == 'group')
   mrgdp_newattachment_start( $foruminfo );
 }]]></phpcode>
 		</plugin>
-		<plugin active="1" executionorder="5">
-			<title>Merge posts</title>
-			<hookname>newpost_complete</hookname>
-			<phpcode><![CDATA[if( ! $vbulletin->options['mrgdp_use_advanced_merge'] )
-{
-  if( ! $prevpostfound AND $vbulletin->GPC['mrgdp_probdoublepost'] )
-  {
-    require_once( DIR . '/includes/functions_mergedoubleposts.php' );
-    mrgdp_newpost_complete( $dpostsaved, $post, $foruminfo, $mrgdp_threadinfo, $threadinfo );
-  }
-}]]></phpcode>
-		</plugin>
 		<plugin active="1" executionorder="1">
 			<title>Advanced merge posts</title>
 			<hookname>newpost_complete</hookname>
-			<phpcode><![CDATA[if( $vbulletin->options['mrgdp_use_advanced_merge']
-    AND $vbulletin->GPC['mrgdp_posts_are_merged'] )
-{
-  // set correct postid value
-  $post['postid'] = $dataman->fetch_field('postid'); 
+			<phpcode><![CDATA[  // set correct postid value
+  $post['postid'] = $dataman->fetch_field('postid');
 
   // restore 'enableemail' flag value
   $vbulletin->options['enableemail'] = $vbulletin->GPC['mrgdp_enableemail'];
@@ -188,29 +173,7 @@ if (THIS_SCRIPT == 'group')
       `threadid` =  " . $threadinfo['threadid'] . ",
       `dupehash` = '" . $vbulletin->db->escape_string( $vbulletin->GPC['mrgdp_dupehash'] ) . "',
       `dateline` =  " . TIMENOW . "
-  ");
-}]]></phpcode>
-		</plugin>
-		<plugin active="1" executionorder="10">
-			<title>Check merge conditions</title>
-			<hookname>newpost_process</hookname>
-			<phpcode><![CDATA[if( ! $vbulletin->options['mrgdp_use_advanced_merge'] )
-{
-  require_once( DIR . '/includes/functions_mergedoubleposts.php' );
-  mrgdp_newpost_process( $mrgdp_threadinfo, $dpostsaved, $threadinfo );
-}]]></phpcode>
-		</plugin>
-		<plugin active="1" executionorder="5">
-			<title>Return merged post</title>
-			<hookname>newreply_post_ajax</hookname>
-			<phpcode><![CDATA[if( ! $vbulletin->options['mrgdp_use_advanced_merge'] )
-{
-  if( $vbulletin->GPC['ajax']
-      AND $vbulletin->GPC['mrgdp_probdoublepost'] )
-  {
-    $vbulletin->GPC['ajax_lastpost'] = 0;
-  }
-}]]></phpcode>
+  ");]]></phpcode>
 		</plugin>
 		<plugin active="1" executionorder="5">
 			<title>Modify quick reply template</title>
@@ -226,8 +189,7 @@ if (THIS_SCRIPT == 'group')
 			<hookname>postdata_presave</hookname>
 			<phpcode><![CDATA[require_once( DIR . '/includes/functions_mergedoubleposts.php' );
 
-if( $this->registry->options['mrgdp_use_advanced_merge']
-    AND ! $this->post['preview'] /* do not do anything on message preview */
+if( ! $this->post['preview'] /* do not do anything on message preview */
     AND $this->post['threadid']
     AND $this->info['thread']['lastposter'] == $this->fetch_field( 'username' )
     AND $this->info['thread']['lastpost']
@@ -456,18 +418,11 @@ if( $this->registry->options['mrgdp_use_advanced_merge']
 			<phrase name="setting_mrgdp_spacer_title" date="1259764962" username="Dimit" version="2.5"><![CDATA[Delimeter text]]></phrase>
 			<phrase name="setting_mrgdp_timespan_desc" date="1259764962" username="Dimit" version="2.5"><![CDATA[If user make sequent postings faster than this time, then results will be merged in a single post.]]></phrase>
 			<phrase name="setting_mrgdp_timespan_title" date="1259764962" username="Dimit" version="2.5"><![CDATA[Merge time (minutes)]]></phrase>
-			<phrase name="setting_mrgdp_use_advanced_merge_desc" date="1259765692" username="Vitaly" version="2.5"><![CDATA[Don't touch! New method merge posts in single pass. Disabling this setting causes rollback to 2-pass merge (create new post, then merge to previous, then delete new post). This setting will be removed, if no conflicts found.]]></phrase>
-			<phrase name="setting_mrgdp_use_advanced_merge_title" date="1259765692" username="Vitaly" version="2.5"><![CDATA[Use advanced merge method]]></phrase>
 			<phrase name="settinggroup_mrgdp_prevdoublepost" date="1259764962" username="Dimit" version="2.5"><![CDATA[Merge Double Posts]]></phrase>
 		</phrasetype>
 	</phrases>
 	<options>
 		<settinggroup name="mrgdp_prevdoublepost" displayorder="65535">
-			<setting varname="mrgdp_use_advanced_merge" displayorder="1">
-				<datatype>boolean</datatype>
-				<optioncode>yesno</optioncode>
-				<defaultvalue>1</defaultvalue>
-			</setting>
 			<setting varname="mrgdp_timespan" displayorder="10">
 				<datatype>number</datatype>
 				<defaultvalue>60</defaultvalue>
