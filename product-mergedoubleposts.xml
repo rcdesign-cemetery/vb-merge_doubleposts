@@ -6,11 +6,6 @@
 	<version>2.6</version>
 	<url><![CDATA[http://www.vbulletin.org/forum/misc.php?do=producthelp&pid=mergedoubleposts]]></url>
 	<versioncheckurl><![CDATA[http://www.vbulletin.org/forum/misc.php?do=productcheck&pid=mergedoubleposts]]></versioncheckurl>
-	<apm_releasedate>1259877600</apm_releasedate>
-	<apm_author>Dmitry Titov, Vitaly Puzrin</apm_author>
-	<apm_relatedurl />
-	<apm_extrainfo />
-	<apm_extraedit />
 	<dependencies>
 	</dependencies>
 	<codes>
@@ -48,10 +43,10 @@
           var C = G.responseXML.getElementsByTagName("postbit");
 
           for (D = 0; D < C.length; D++) {
-            var dp_editdiv = fetch_object("edit" + C[D].getAttribute("postid"));
+            var dp_li_post = fetch_object("post_" + C[D].getAttribute("postid"));
 
-            if (dp_editdiv) {
-              dp_editdiv.parentNode.removeChild(dp_editdiv);
+            if (dp_li_post) {
+              dp_li_post.parentNode.removeChild(dp_li_post);
             }
           }
         }
@@ -74,7 +69,7 @@
         var C = ajax.responseXML.getElementsByTagName("message");
 
         for (D = 0; D < C.length; D++) {
-          var dp_2rem_li = fetch_object("gmessage" + C[D].getAttribute("gmid"));
+          var dp_2rem_li = fetch_object("gmessage_" + C[D].getAttribute("gmid"));
 
           if (dp_2rem_li) {
             dp_2rem_li.parentNode.removeChild(dp_2rem_li);
@@ -85,7 +80,8 @@
       return this.post_save_original(ajax);
     };
 -->
-</script>]]></template>
+</script>
+]]></template>
 	</templates>
 	<plugins>
 		<plugin active="1" executionorder="5">
@@ -93,12 +89,12 @@
 			<hookname>cache_templates</hookname>
 			<phpcode><![CDATA[if (THIS_SCRIPT == 'showthread')
 {
-  $globaltemplates[] = 'showthread_quickreply_mrgdp';
+  $cache[] = 'showthread_quickreply_mrgdp';
 }
 
 if (THIS_SCRIPT == 'group')
 {
-  $globaltemplates[] = 'socialgroups_group_mrgdp';
+  $cache[] = 'socialgroups_group_mrgdp';
 }]]></phpcode>
 		</plugin>
 		<plugin active="1" executionorder="5">
@@ -110,16 +106,6 @@ if (THIS_SCRIPT == 'group')
 			<title>Groups: Add the valid field to DM</title>
 			<hookname>groupmessagedata_start</hookname>
 			<phpcode><![CDATA[$this->validfields['mrgdp_editdateline'] = array(TYPE_UNIXTIME, REQ_NO);]]></phpcode>
-		</plugin>
-		<plugin active="1" executionorder="5">
-			<title>Groups: Modify quick reply template</title>
-			<hookname>group_complete</hookname>
-			<phpcode><![CDATA[if ($show['quickcomment']
-    AND (    $templatename == 'socialgroups_group'
-          OR $templatename == 'socialgroups_discussionview'))
-{
-  eval('$footer .= "' . fetch_template('socialgroups_group_mrgdp') . '";');
-}]]></phpcode>
 		</plugin>
 		<plugin active="1" executionorder="5">
 			<title>Groups: Merge Posts</title>
@@ -178,10 +164,24 @@ if (THIS_SCRIPT == 'group')
 		<plugin active="1" executionorder="5">
 			<title>Modify quick reply template</title>
 			<hookname>parse_templates</hookname>
-			<phpcode><![CDATA[if (THIS_SCRIPT == 'showthread')
+			<phpcode><![CDATA[
+if (THIS_SCRIPT == 'showthread')
 {
-  $vbulletin->templatecache['showthread_quickreply'] .=
-    "\n" . fetch_template('showthread_quickreply_mrgdp');
+    $tmpl = vB_Template::create('showthread_quickreply_mrgdp');
+    $vbulletin->templatecache['showthread_quickreply'] .= ' $final_rendered .= \'' . $tmpl->render() . '\';';
+}
+if (THIS_SCRIPT == 'group')
+{
+    $tmpl = vB_Template::create('socialgroups_group_mrgdp');
+    if (array_key_exists('socialgroups_group', $vbulletin->templatecache))
+    {
+        $vbulletin->templatecache['socialgroups_group'] .= ' $final_rendered .= \'' . $tmpl->render() . '\';';
+    }
+    if (array_key_exists('socialgroups_discussionview', $vbulletin->templatecache))
+    {
+        global $template_hook;
+        $template_hook['group_discuss_after_quick_reply'] .= "\n" . $tmpl->render();
+    }
 }]]></phpcode>
 		</plugin>
 		<plugin active="1" executionorder="1">
@@ -474,6 +474,4 @@ if( ! $this->post['preview'] /* do not do anything on message preview */
 	</cronentries>
 	<faqentries>
 	</faqentries>
-	<templateedits>
-	</templateedits>
 </product>
