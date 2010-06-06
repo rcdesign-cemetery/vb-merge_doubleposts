@@ -14,4 +14,6 @@ Installation:
    import ALSO product-mergedoubleposts_ru.xml. You need BOTH xmls imported.
    Second one contains ONLY translation deals.
 
-Not yet released at vborg.
+Released at vborg:
+
+http://www.vbulletin.org/forum/misc.php?do=producthelp&pid=mergedoubleposts
