@@ -3,14 +3,9 @@
 <product productid="mergedoubleposts" active="1">
 	<title>Merge Double Posts</title>
 	<description>This Modification prevents doubleposts by merging post together, if the last poster of a thread tries to post again.</description>
-	<version>2.7</version>
+	<version>2.8</version>
 	<url><![CDATA[http://www.vbulletin.org/forum/misc.php?do=producthelp&pid=mergedoubleposts]]></url>
 	<versioncheckurl><![CDATA[http://www.vbulletin.org/forum/misc.php?do=productcheck&pid=mergedoubleposts]]></versioncheckurl>
-	<apm_releasedate></apm_releasedate>
-	<apm_author></apm_author>
-	<apm_relatedurl></apm_relatedurl>
-	<apm_extrainfo></apm_extrainfo>
-	<apm_extraedit></apm_extraedit>
 	<dependencies>
 	</dependencies>
 	<codes>
@@ -141,11 +136,15 @@ if (THIS_SCRIPT == 'group')
 		<plugin active="1" executionorder="1">
 			<title>Advanced merge posts</title>
 			<hookname>newpost_complete</hookname>
-			<phpcode><![CDATA[  // set correct postid value
-  $post['postid'] = $dataman->fetch_field('postid');
+			<phpcode><![CDATA[global $mrgdp_posts_are_merged, $mrgdp_dupehash, $mrgdp_enableemail;
+
+if ($mrgdp_posts_are_merged)
+{
+  // set correct postid value
+  $post['postid'] = $id = $dataman->fetch_field('postid');
 
   // restore 'enableemail' flag value
-  $vbulletin->options['enableemail'] = $vbulletin->GPC['mrgdp_enableemail'];
+  $vbulletin->options['enableemail'] = $mrgdp_enableemail;
 
   // ### DO EMAIL NOTIFICATION ###
   if(     $post['visible']
@@ -166,9 +165,10 @@ if (THIS_SCRIPT == 'group')
     SET
       `userid`   =  " . $vbulletin->userinfo['userid'] . ",
       `threadid` =  " . $threadinfo['threadid'] . ",
-      `dupehash` = '" . $vbulletin->db->escape_string( $vbulletin->GPC['mrgdp_dupehash'] ) . "',
+      `dupehash` = '" . $vbulletin->db->escape_string( $mrgdp_dupehash ) . "',
       `dateline` =  " . TIMENOW . "
-  ");]]></phpcode>
+  ");
+}]]></phpcode>
 		</plugin>
 		<plugin active="1" executionorder="5">
 			<title>Modify quick reply template</title>
@@ -197,6 +197,10 @@ if (THIS_SCRIPT == 'group')
 			<title>Advanced merge posts</title>
 			<hookname>postdata_presave</hookname>
 			<phpcode><![CDATA[require_once( DIR . '/includes/functions_mergedoubleposts.php' );
+
+global $mrgdp_posts_are_merged, $mrgdp_dupehash, $mrgdp_enableemail;
+
+$mrgdp_posts_are_merged = false;
 
 if( ! $this->post['preview'] /* do not do anything on message preview */
     AND $this->post['threadid']
@@ -378,14 +382,13 @@ if( ! $this->post['preview'] /* do not do anything on message preview */
         }
 
         // set flag showing that posts are merged to correctly send notifications
-        $this->registry->GPC['mrgdp_posts_are_merged'] = true;
+        $mrgdp_posts_are_merged = true;
 
         // save dupehash
-        $this->registry->GPC['mrgdp_dupehash'] = $dupehash;
+        $mrgdp_dupehash = $dupehash;
 
         // save original 'enableemail' flag value
-        $this->registry->GPC['mrgdp_enableemail']
-          = $this->registry->options['enableemail'];
+        $mrgdp_enableemail = $this->registry->options['enableemail'];
 
         // set 'enableemail' flag to 'false' to prevent sending notifications
         // cause it results in an error, we will do it manualy a bit later
