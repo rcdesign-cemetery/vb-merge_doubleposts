@@ -319,7 +319,12 @@ if( ! $this->post['preview'] /* do not do anything on message preview */
         if( $this->registry->options['mrgdp_bumpthread'] )
           $this->set( 'dateline', TIMENOW );
         else
+        {
+          // temporary fix. reset lastpost to match condition when ajax data about post is returned
+          global $vbulletin;
+          $vbulletin->GPC['ajax_lastpost'] = 0;
           $this->set( 'dateline', $mrgdp_prevpost['dateline'] );
+        }
         // add edit reason if not empty and allowed
         $mrgdp_edit_reason = trim( $this->registry->options['mrgdp_editedby'] );
 
