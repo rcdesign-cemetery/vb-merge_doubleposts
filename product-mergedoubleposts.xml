@@ -60,10 +60,11 @@
       return qr_do_ajax_post_original(G);
     };
 -->
-</script>
-]]></template>
-		<template name="socialgroups_group_mrgdp" templatetype="template" date="1235841384" username="Dimit" version=""><![CDATA[<script type="text/javascript">
+</script>]]></template>
+		<template name="socialgroups_group_mrgdp" templatetype="template" date="1292506564" username="varnak" version="2.9"><![CDATA[<script type="text/javascript">
 <!--
+if (typeof vB_QuickComment.prototype.post_save != "undefined")
+{
   vB_QuickComment.prototype.post_save_original =
     vB_QuickComment.prototype.post_save;
 
@@ -84,9 +85,9 @@
 
       return this.post_save_original(ajax);
     };
+}
 -->
-</script>
-]]></template>
+</script>]]></template>
 	</templates>
 	<stylevardfns>
 	</stylevardfns>
@@ -167,13 +168,13 @@ if ($mrgdp_posts_are_merged)
 		<plugin active="1" executionorder="5">
 			<title>Modify quick reply template</title>
 			<hookname>parse_templates</hookname>
-			<phpcode><![CDATA[
-if (THIS_SCRIPT == 'showthread')
+			<phpcode><![CDATA[if (THIS_SCRIPT == 'showthread')
 {
     $tmpl = vB_Template::create('showthread_quickreply_mrgdp');
     $vbulletin->templatecache['showthread_quickreply'] .= ' $final_rendered .= \'' . $tmpl->render() . '\';';
 }
-if (THIS_SCRIPT == 'group')
+
+if (THIS_SCRIPT == 'group' AND isset($_REQUEST['do']) AND 'discuss' == $_REQUEST['do'])
 {
     $tmpl = vB_Template::create('socialgroups_group_mrgdp');
     if (array_key_exists('socialgroups_group', $vbulletin->templatecache))
